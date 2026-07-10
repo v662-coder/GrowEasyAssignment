@@ -17,7 +17,7 @@ const upload = multer({
   }
 });
 
-// ✅ Upload endpoint (matches frontend)
+// ✅ IMPORTANT: Add /upload endpoint (matches frontend)
 router.post('/upload', upload.single('file'), processCSV);
 
 // Preview endpoint

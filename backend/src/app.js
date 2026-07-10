@@ -8,16 +8,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ Allow ALL origins in production (for testing)
-const corsOptions = {
-  origin: '*', // Allow all origins
+// ✅ Allow ALL origins for testing
+app.use(cors({
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  credentials: false, // Must be false when origin is '*'
-  optionsSuccessStatus: 200
-};
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'],
+  credentials: false
+}));
 
-app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Log all requests
 app.use((req, res, next) => {
@@ -25,9 +25,6 @@ app.use((req, res, next) => {
   console.log(`🌐 Origin: ${req.headers.origin || 'No origin'}`);
   next();
 });
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/csv', csvRoutes);
@@ -38,7 +35,13 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     message: 'Server is running',
     environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      upload: 'POST /api/csv/upload',
+      preview: 'POST /api/csv/preview',
+      process: 'POST /api/csv/process',
+      test: 'GET /api/csv/test'
+    }
   });
 });
 
@@ -47,6 +50,7 @@ app.get('/', (req, res) => {
   res.json({
     name: 'GrowEasy Backend',
     version: '1.0.0',
+    status: 'Running',
     endpoints: {
       health: 'GET /api/health',
       csvUpload: 'POST /api/csv/upload',
@@ -68,5 +72,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📡 API URL: http://localhost:${PORT}/api`);
 });

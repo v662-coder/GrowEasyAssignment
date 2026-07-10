@@ -76,7 +76,7 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1>Vishnu GrowEasy CSV Importer</h1>
+      <h1>Vishnu's GrowEasy CSV Importer</h1>
       <p className="subtitle">AI-powered CSV import for CRM data</p>
 
       <div className="step">
