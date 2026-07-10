@@ -54,13 +54,13 @@ export default function LeadTable({ leads }) {
                 <td className="py-3 px-4 text-sm text-gray-600">{lead.dateCreated}</td>
                 <td className="py-3 px-4 text-sm text-gray-600">{lead.company}</td>
                 <td className="py-3 px-4">
-                  <span className={\inline-block px-3 py-1 rounded-full text-xs font-medium \\}>
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(lead.status)}`}>
                     {lead.status}
                   </span>
                 </td>
                 <td className="py-3 px-4 text-sm text-gray-400">—</td>
                 <td className="py-3 px-4">
-                  <span className={\inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold \\}>
+                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${getLevelColor(lead.level)}`}>
                     {lead.level}
                   </span>
                 </td>
