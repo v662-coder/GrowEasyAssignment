@@ -1,0 +1,12 @@
+﻿node_modules/
+.next/
+*.log
+.env
+.env.local
+*.node
+*.wasm
+*.dll
+dist/
+build/
+.DS_Store
+Thumbs.db
