@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { FiUpload, FiDownload, FiLoader, FiCheck, FiX } from 'react-icons/fi';
+import { FiUpload, FiDownload, FiLoader, FiCheck, FiX, FiRefreshCw, FiEdit } from 'react-icons/fi';
 import { csvAPI } from '@/services/api';
 import toast from 'react-hot-toast';
 
@@ -11,6 +11,7 @@ export default function CSVImport() {
   const [uploading, setUploading] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [step, setStep] = useState(1); // 1: Upload, 2: Preview, 3: Processing, 4: Results
+  const [importedData, setImportedData] = useState(null);
 
   // Step 1: Drag & Drop
   const onDrop = useCallback((acceptedFiles) => {
@@ -67,8 +68,8 @@ export default function CSVImport() {
     }
   };
 
-  // Step 3: Process with AI
-  const handleProcess = async () => {
+  // Step 3: Process with AI (Confirm Import)
+  const handleConfirmImport = async () => {
     if (!previewData) return;
     
     setUploading(true);
@@ -77,8 +78,9 @@ export default function CSVImport() {
       const response = await csvAPI.processCSV(previewData.rows);
       
       if (response.data.success) {
+        setImportedData(response.data.data);
         toast.success(`Successfully imported ${response.data.data.totalImported} records`);
-        setStep(4);
+        setStep(3); // Move to results
       }
     } catch (error) {
       console.error('❌ Processing Error:', error);
@@ -88,12 +90,31 @@ export default function CSVImport() {
     }
   };
 
-  // Reset
-  const handleReset = () => {
+  // Cancel Import (from preview page)
+  const handleCancel = () => {
     setStep(1);
     setFile(null);
     setPreviewData(null);
-    toast.success('Reset successful');
+    setImportedData(null);
+    toast.info('Import cancelled');
+  };
+
+  // Update File (from upload page)
+  const handleUpdateFile = () => {
+    setFile(null);
+    toast.info('Select a new file');
+    // Focus on dropzone
+    const dropzone = document.querySelector('[data-dropzone]');
+    if (dropzone) dropzone.click();
+  };
+
+  // New Import (from results page)
+  const handleNewImport = () => {
+    setStep(1);
+    setFile(null);
+    setPreviewData(null);
+    setImportedData(null);
+    toast.info('Ready for new import');
   };
 
   // Render Step 1: Upload
@@ -107,6 +128,7 @@ export default function CSVImport() {
 
         <div 
           {...getRootProps()} 
+          data-dropzone
           className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-colors ${
             isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
           }`}
@@ -127,28 +149,41 @@ export default function CSVImport() {
             <FiDownload className="w-4 h-4" />
             Download Sample CSV Template
           </button>
-          {file && (
+          
+          {file ? (
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
                 Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
               </span>
-              <button 
-                onClick={handleUpload}
-                disabled={uploading}
-                className="btn-primary flex items-center gap-2"
-              >
-                {uploading ? (
-                  <>
-                    <FiLoader className="animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <FiUpload /> Upload File
-                  </>
-                )}
-              </button>
+              <div className="flex gap-2">
+                {/* ✅ Update File Button */}
+                <button 
+                  onClick={handleUpdateFile}
+                  className="btn-secondary flex items-center gap-2 text-sm"
+                >
+                  <FiEdit className="w-4 h-4" />
+                  Update File
+                </button>
+                <button 
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <FiLoader className="animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <FiUpload /> Upload File
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+          ) : (
+            <span className="text-sm text-gray-400">No file selected</span>
           )}
         </div>
       </div>
@@ -167,11 +202,18 @@ export default function CSVImport() {
             </p>
           </div>
           <div className="flex gap-3">
-            <button onClick={handleReset} className="btn-secondary">
+            {/* ✅ Cancel Button */}
+            <button 
+              onClick={handleCancel}
+              disabled={uploading}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <FiX className="w-4 h-4" />
               Cancel
             </button>
+            {/* ✅ Confirm Import Button */}
             <button 
-              onClick={handleProcess}
+              onClick={handleConfirmImport}
               disabled={uploading}
               className="btn-primary flex items-center gap-2"
             >
@@ -217,23 +259,109 @@ export default function CSVImport() {
     );
   }
 
-  // Step 4: Results
-  if (step === 4) {
+  // Step 3: Results
+  if (step === 3 && importedData) {
     return (
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-lg font-semibold text-green-600">✅ Import Complete!</h2>
-            <p className="text-sm text-gray-500">CSV processed successfully</p>
+            <div className="flex gap-4 mt-2">
+              <span className="text-sm text-green-600">✅ {importedData.totalImported} imported</span>
+              <span className="text-sm text-red-600">❌ {importedData.totalSkipped} skipped</span>
+              <span className="text-sm text-gray-500">📊 {importedData.totalRecords} total</span>
+            </div>
           </div>
-          <button onClick={handleReset} className="btn-secondary">
-            Import Another File
-          </button>
+          <div className="flex gap-3">
+            {/* ✅ Import New File Button */}
+            <button 
+              onClick={handleNewImport}
+              className="btn-primary flex items-center gap-2"
+            >
+              <FiRefreshCw className="w-4 h-4" />
+              Import New File
+            </button>
+          </div>
         </div>
-        <div className="text-center py-8">
-          <FiCheck className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <p className="text-gray-600">All records processed successfully!</p>
-        </div>
+
+        {/* Imported Records Preview */}
+        {importedData.records && importedData.records.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Imported Records</h3>
+            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+              <table className="w-full">
+                <thead className="sticky top-0 bg-white border-b border-gray-200">
+                  <tr>
+                    {['created_at', 'name', 'email', 'mobile', 'company', 'crm_status'].map((field) => (
+                      <th key={field} className="text-left py-2 px-3 text-xs font-semibold text-gray-400 uppercase whitespace-nowrap">
+                        {field}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {importedData.records.slice(0, 20).map((record, index) => (
+                    <tr key={index} className="border-b border-gray-100">
+                      <td className="py-2 px-3 text-xs text-gray-600">
+                        {new Date(record.created_at).toLocaleString()}
+                      </td>
+                      <td className="py-2 px-3 text-sm text-gray-900">{record.name}</td>
+                      <td className="py-2 px-3 text-sm text-gray-600">{record.email}</td>
+                      <td className="py-2 px-3 text-sm text-gray-600">
+                        {record.country_code}{record.mobile_without_country_code}
+                      </td>
+                      <td className="py-2 px-3 text-sm text-gray-600">{record.company}</td>
+                      <td className="py-2 px-3">
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          record.crm_status === 'SALE_DONE' ? 'bg-green-100 text-green-800' :
+                          record.crm_status === 'GOOD_LEAD_FOLLOW_UP' ? 'bg-blue-100 text-blue-800' :
+                          record.crm_status === 'DID_NOT_CONNECT' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {record.crm_status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {importedData.records.length > 20 && (
+                <p className="text-sm text-gray-500 text-center py-3">
+                  Showing 20 of {importedData.records.length} records
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Skipped Records */}
+        {importedData.skippedRecords && importedData.skippedRecords.length > 0 && (
+          <div className="mt-4 border border-red-200 bg-red-50 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-red-700 mb-3">
+              Skipped Records ({importedData.totalSkipped})
+            </h3>
+            <div className="overflow-x-auto max-h-48 overflow-y-auto">
+              <table className="w-full">
+                <thead className="sticky top-0 bg-red-50 border-b border-red-200">
+                  <tr>
+                    <th className="text-left py-2 px-3 text-xs font-semibold text-red-600">Record</th>
+                    <th className="text-left py-2 px-3 text-xs font-semibold text-red-600">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {importedData.skippedRecords.slice(0, 10).map((skip, index) => (
+                    <tr key={index} className="border-b border-red-100">
+                      <td className="py-2 px-3 text-xs text-gray-600">
+                        {JSON.stringify(skip.original).slice(0, 100)}...
+                      </td>
+                      <td className="py-2 px-3 text-xs text-red-600">{skip.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
