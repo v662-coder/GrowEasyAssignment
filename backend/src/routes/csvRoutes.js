@@ -16,10 +16,10 @@ const upload = multer({
   }
 });
 
-// ✅ ADD THIS - For your frontend
+// ✅ Add /upload endpoint (for frontend)
 router.post('/upload', upload.single('file'), processCSV);
 
-// Keep existing routes
+// Existing endpoints
 router.get('/test', (req, res) => {
   res.json({ message: 'CSV routes are working!' });
 });
