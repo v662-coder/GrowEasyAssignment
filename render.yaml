@@ -1,0 +1,12 @@
+﻿services:
+  - type: web
+    name: groweasy-backend
+    runtime: node
+    repo: https://github.com/v662-coder/GrowEasyAssignment
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
