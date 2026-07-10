@@ -1,8 +1,10 @@
 ﻿import axios from 'axios';
 
+// Get API URL from environment
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 console.log(`🔧 API URL: ${API_URL}`);
+console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -11,7 +13,7 @@ const api = axios.create({
     'Accept': 'application/json',
   },
   timeout: 300000,
-  withCredentials: false, // Important for CORS
+  withCredentials: false,
 });
 
 // Request interceptor
@@ -31,7 +33,6 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('❌ API Error:', error.response?.status, error.response?.data);
-    console.error('❌ Error Config:', error.config);
     return Promise.reject(error);
   }
 );
@@ -39,11 +40,9 @@ api.interceptors.response.use(
 export const csvAPI = {
   previewCSV: (file) => {
     const formData = new FormData();
-    formData.append('file', file); // ✅ Use 'file' not 'csvFile'
+    formData.append('file', file);
     return api.post('/csv/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
   processCSV: (csvData) => {

@@ -4,12 +4,6 @@ import { useState } from 'react'
 import CSVImport from '@/components/LeadSources/CSVImport'
 
 export default function LeadSourcesPage() {
-  const [sources] = useState([
-    { name: 'Facebook Ads', status: 'Not Connected', active: false },
-    { name: 'Google Ads', status: 'Not Connected', active: false },
-    { name: 'hony', status: 'Not Connected', active: false }
-  ])
-
   return (
     <div>
       <div className="mb-8">
