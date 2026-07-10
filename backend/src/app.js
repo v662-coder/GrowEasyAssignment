@@ -8,44 +8,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ CORRECT CORS Configuration
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://grow-easy-assignment-urmr-69n0uqo52-vishnu-chaurasiyas-projects.vercel.app',
-  'https://grow-easy-assignment-urmr-69n0uqo52-vishnu-chaurasiyas-projects.vercel.app/',
-  'https://*.vercel.app', // Allow all Vercel apps
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
+// ✅ Allow ALL origins in production (for testing)
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin is allowed
-    if (allowedOrigins.some(allowed => origin.includes(allowed) || allowed.includes('vercel.app'))) {
-      callback(null, true);
-    } else {
-      console.log('❌ Blocked by CORS:', origin);
-      callback(null, true); // Allow all in development
-    }
-  },
-  credentials: true,
+  origin: '*', // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  credentials: false, // Must be false when origin is '*'
   optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Log all requests
 app.use((req, res, next) => {
   console.log(`📥 ${req.method} ${req.url}`);
-  console.log(`🌐 Origin: ${req.headers.origin}`);
+  console.log(`🌐 Origin: ${req.headers.origin || 'No origin'}`);
   next();
 });
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/csv', csvRoutes);
@@ -56,8 +38,7 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     message: 'Server is running',
     environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString(),
-    allowedOrigins: allowedOrigins
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -66,9 +47,9 @@ app.get('/', (req, res) => {
   res.json({
     name: 'GrowEasy Backend',
     version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
     endpoints: {
       health: 'GET /api/health',
+      csvUpload: 'POST /api/csv/upload',
       csvPreview: 'POST /api/csv/preview',
       csvProcess: 'POST /api/csv/process',
     },
